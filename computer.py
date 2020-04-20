@@ -112,6 +112,26 @@ class Parser:
     def __init__(self):
         pass
 
+    def process(self, expression, operators, adder):
+        i = 0
+        out = []
+
+        while i < len(expression):
+            token = expression[i]
+
+            if type(token) == OperatorToken and token.op in operators:
+                prev = out.pop()
+                newItem = adder(token.op, prev, expression[i + 1])
+                out.append(newItem)
+                if newItem.op != "!":
+                    i += 1
+            else:
+                out.append(token)
+
+            i += 1
+
+        return out
+
     def parse(self, expression):
         out = []
         i = 0
@@ -150,101 +170,31 @@ class Parser:
         out = []
 
         # !
-        opFound = True
-        while opFound and len(expression):
-            i = 0
-            opFound = False
-            while i < len(expression):
-                token = expression[i]
-
-                if not opFound and type(token) == OperatorToken and token.op in ["!"]:
-                    out.pop()
-                    out.append(Operation(token.op, [expression[i - 1]]))
-                    opFound = True
-                else:
-                    out.append(token)
-
-                i += 1
-
-            expression = out.copy()
-            out = []
+        expression = self.process(expression, ["!"], lambda op, x, y: Operation(op, [x, y]))
 
         # ^ 
-        opFound = True
-        while opFound and len(expression):
-            i = 0
-            opFound = False
-            while i < len(expression):
-                token = expression[i]
-
-                if not opFound and type(token) == OperatorToken and token.op in ["^"]:
-                    out.pop()
-                    out.append(Operation(token.op, [expression[i - 1], expression[i + 1]]))
-                    opFound = True
-                    i += 1
-                else:
-                    out.append(token)
-
-                i += 1
-
-            expression = out.copy()
-            out = []
+        expression = self.process(expression, ["^"], lambda op, x, y: Operation(op, [x, y]))
 
         # *, /
-        opFound = True
-        while opFound and len(expression):
-            i = 0
-            opFound = False
-            while i < len(expression):
-                token = expression[i]
+        expression = self.process(expression, ["*", "/"], lambda op, x, y: Operation(op, [x, y]))
 
-                if not opFound and type(token) == OperatorToken and token.op in ["*", "/"]:
-                    out.pop()
-                    out.append(Operation(token.op, [expression[i - 1], expression[i + 1]]))
-                    opFound = True
-                    i += 1
-                else:
-                    out.append(token)
-
-                i += 1
-
-            expression = out.copy()
-            out = []
-
-        opFound = True
-        while opFound and len(expression):
-            i = 0
-            opFound = False
-            while i < len(expression):
-                token = expression[i]
-
-                if not opFound and type(token) == OperatorToken and token.op in ["+", "-"]:
-                    out.pop()
-                    out.append(Operation(token.op, [expression[i - 1], expression[i + 1]]))
-                    opFound = True
-                    i += 1
-                else:
-                    out.append(token)
-
-                i += 1
-
-            expression = out.copy()
-            out = []
+        # +, -
+        expression = self.process(expression, ["+", "-"], lambda op, x, y: Operation(op, [x, y]))
 
         return expression[0]
 
-#expression = "1+(2+4)*5+5/6"
-#expression = "10 + 9 / 2 + 3 * (2 + 8)"
-#expression = "3 + 2 * (7 + 3 / (3 + 4))"
-#expression = "0.7 * 44 + 0.7 * 63 + 95"
-expression = "100 ^ 0.5"
+expressions = [
+    ("1+(2+4)*5+5/6", 31.8333333333),
+    ("10 + 9 / 2 + 3 * (2 + 8)", 44.5),
+    ("3! + 2^2 * (7 + 3 / (3 + 4))", 35.7142857143),
+    ("0.7 * 44 + 0.7 * 63 + 95", 169.9),
+    ("100 ^ 0.5", 10)
+]
 
-parser = Parser()
-lexer = Lexer()
-tokens = lexer.getTokens(expression)
-print(parser.parse(tokens).eval())
-#exp = Expression(expression)
-#parsed = parser.parse(expression)
-#print(parsed)
-#exp = Expression(parsed)
-#print(exp.eval())
+for expression, value in expressions:
+    parser = Parser()
+    lexer = Lexer()
+    tokens = lexer.getTokens(expression)
+
+    evaluated = parser.parse(tokens).eval()
+    print(evaluated, value)
