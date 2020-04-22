@@ -1,5 +1,4 @@
 import math
-import time
 
 operators = ["+", "-", "*", "/", "!", "^"]
 
@@ -87,9 +86,7 @@ class Lexer:
                     tokens.append(ClosingToken())
                 elif char in operators:
                     tokens.append(OperatorToken(expression[i]))
-                else:
-                    raise Exception("syntax error: " + char + " at " + str(i))
-            
+
             if state == "number":
                 if char.isdigit() or char == ".":
                     currentToken.append(char)
@@ -121,7 +118,10 @@ class Parser:
 
             if type(token) == OperatorToken and token.op in operators:
                 prev = out.pop()
-                newItem = adder(token.op, prev, expression[i + 1])
+                nextExpression = None
+                if i + 1 < len(expression):
+                    nextExpression = expression[i + 1]
+                newItem = adder(token.op, prev, nextExpression)
                 out.append(newItem)
                 if newItem.op != "!":
                     i += 1
@@ -144,18 +144,7 @@ class Parser:
             token = expression[i]
 
             if type(token) == OpeningToken:
-                closingTokenIndex = i + 1
-                level = 1
-                for j in range(i + 1, len(expression)):
-                    if type(expression[j]) == OpeningToken:
-                        level += 1
-                    if type(expression[j]) == ClosingToken:
-                        level -= 1
-
-                        if not level:
-                            closingTokenIndex = j
-                            break
-
+                closingTokenIndex = next((len(expression) - 1- i for i, e in enumerate(reversed(expression)) if type(e) == ClosingToken), None)
                 out.append(self.parse(expression[i + 1: closingTokenIndex]))
                 i = closingTokenIndex
             elif type(token) == NumberToken:
@@ -182,19 +171,3 @@ class Parser:
         expression = self.process(expression, ["+", "-"], lambda op, x, y: Operation(op, [x, y]))
 
         return expression[0]
-
-expressions = [
-    ("1+(2+4)*5+5/6", 31.8333333333),
-    ("10 + 9 / 2 + 3 * (2 + 8)", 44.5),
-    ("3! + 2^2 * (7 + 3 / (3 + 4))", 35.7142857143),
-    ("0.7 * 44 + 0.7 * 63 + 95", 169.9),
-    ("100 ^ 0.5", 10)
-]
-
-for expression, value in expressions:
-    parser = Parser()
-    lexer = Lexer()
-    tokens = lexer.getTokens(expression)
-
-    evaluated = parser.parse(tokens).eval()
-    print(evaluated, value)
