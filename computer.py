@@ -1,6 +1,7 @@
 import math
 
-operators = ["+", "-", "*", "/", "!", "^"]
+operators = ["+", "-", "*", "/", "!", "^", "="]
+context = {}
 
 class Expression:
     def __init__(self, parsed):
@@ -16,6 +17,17 @@ class NumberLiteral(Expression):
 
     def __str__(self):
         return str(self.value)
+
+class Variable(Expression):
+    def __init__(self, name):
+        self.name = name
+        pass
+
+    def __str__(self):
+        return self.name + " " + str(self.value)
+
+    def eval(self):
+        return context[self.name]
 
 class Operation(Expression):
     def __init__(self, op, operands = []):
@@ -47,6 +59,10 @@ class Operation(Expression):
         return self.value
 
 class NumberToken:
+    def __init__(self, value):
+        self.value = value
+
+class VariableToken:
     def __init__(self, value):
         self.value = value
 
@@ -86,6 +102,8 @@ class Lexer:
                     tokens.append(ClosingToken())
                 elif char in operators:
                     tokens.append(OperatorToken(expression[i]))
+                elif char.isalpha():
+                    state = "variable"
 
             if state == "number":
                 if char.isdigit() or char == ".":
@@ -97,11 +115,23 @@ class Lexer:
                     state = None
                     i -= 1
 
+            if state == "variable":
+                if char.isalpha():
+                    currentToken.append(char)
+
+                if not char.isalpha():
+                    tokens.append(VariableToken(("".join(currentToken))))
+                    currentToken = []
+                    state = None
+                    i -= 1
+
             i += 1
 
         if len(currentToken):
             if state == "number":
                 tokens.append(NumberToken(float("".join(currentToken))))
+            elif state == "variable":
+                tokens.append(VariableToken("".join(currentToken)))
 
         return tokens
 
@@ -139,6 +169,11 @@ class Parser:
         if len(expression) == 1 and type(expression[0]) == NumberToken:
             return NumberLiteral(expression[0].value)
 
+        # =
+        if len(expression) > 2 and type(expression[0]) == VariableToken and expression[1].op == "=":
+            context[expression[0].value] = self.parse(expression[2:])
+            return context[expression[0].value]
+
         # parentheses
         while i < len(expression):
             token = expression[i]
@@ -149,6 +184,10 @@ class Parser:
                 i = closingTokenIndex
             elif type(token) == NumberToken:
                 out.append(NumberLiteral(token.value))
+            elif type(token) == VariableToken:
+                if token.value not in context:
+                    raise Exception("undeclared variable")
+                out.append(NumberLiteral(context[token.value].eval()))
             elif type(token) == OperatorToken:
                 out.append(token)
 

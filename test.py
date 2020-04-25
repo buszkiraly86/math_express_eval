@@ -1,15 +1,24 @@
 from computer import Parser, Lexer
+import math
 
 parser = Parser()
 lexer = Lexer()
 
 expressions = [
+    ("a = 3", 3),
+    ("b = 10", 10),
     ("1+(2+4)*5+5/6", 31.8333333333),
     ("10 + 9 / 2 + 3 * (2 + 8)", 44.5),
-    ("3! + 2^2 * (7 + 3 / (3 + 4))", 35.7142857143),
+    ("a! + 2^2 * (7 + 3 / (3 + 4))", 35.7142857143),
     ("0.7 * 44 + 0.7 * 63 + 95", 169.9),
     ("100 ^ 0.5", 10),
-    ("3!!", 720)
+    ("3!!", 720),
+    ("a * b", 30),
+    ("30 - b", 20),
+    ("b^a", 1000),
+    ("a", 3),
+    ("a = b", 10),
+    ("a", 10)
 ]
 
 badExpressions = [
@@ -18,17 +27,25 @@ badExpressions = [
     "+"
 ]
 
-for expression, value in expressions:
+for expression, expected in expressions:
     tokens = lexer.getTokens(expression)
     evaluated = parser.parse(tokens).eval()
-    print(evaluated, value)
+    close = math.isclose(evaluated, expected)
+    if not close:
+        print(expression, "evaluation incorrect, expected: ", expected, " got: ", evaluated)
+        exit(-1)
 
 for expression in badExpressions:
     try:
-        print(expression)
         tokens = lexer.getTokens(expression)
         evaluated = parser.parse(tokens).eval()
-        print("should have thrown an exception")
+        print(expression, " should have thrown an exception")
         exit(-1)
     except Exception as error:
-        print(error)
+        pass
+
+while True:
+    expression = input(">>>")
+    tokens = lexer.getTokens(expression)
+    evaluated = parser.parse(tokens).eval()
+    print(evaluated)
