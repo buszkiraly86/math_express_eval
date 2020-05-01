@@ -24,7 +24,8 @@ expressions = [
 badExpressions = [
     "1 + 3 * (5",
     "1 ++ 5",
-    "+"
+    "+",
+    "3 = 5"
 ]
 
 for expression, expected in expressions:

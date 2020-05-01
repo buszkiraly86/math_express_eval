@@ -209,4 +209,7 @@ class Parser:
         # +, -
         expression = self.process(expression, ["+", "-"], lambda op, x, y: Operation(op, [x, y]))
 
+        if len(expression) > 1:
+            raise Exception("invalid exception")
+
         return expression[0]
