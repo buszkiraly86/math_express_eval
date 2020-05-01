@@ -47,6 +47,10 @@ for expression in badExpressions:
 
 while True:
     expression = input(">>>")
-    tokens = lexer.getTokens(expression)
-    evaluated = parser.parse(tokens).eval()
-    print(evaluated)
+
+    if expression == "exit":
+        break
+    else:
+        tokens = lexer.getTokens(expression)
+        evaluated = parser.parse(tokens).eval()
+        print(evaluated)
