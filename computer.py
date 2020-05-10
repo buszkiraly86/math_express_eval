@@ -133,7 +133,21 @@ class Lexer:
             elif state == "variable":
                 tokens.append(VariableToken("".join(currentToken)))
 
-        return tokens
+        # handling negative numbers
+        processedTokens = []
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if type(token) == OperatorToken and token.op == "-" and i < len(tokens) - 1 and type(tokens[i + 1]) == NumberToken and (i == 0 or type(tokens[i - 1]) == OpeningToken):
+                tokens[i + 1].value *= -1
+                processedTokens.append(tokens[i + 1])
+                i += 1
+            else:
+                processedTokens.append(token)
+
+            i += 1
+
+        return processedTokens
 
 class Parser:
     def __init__(self):

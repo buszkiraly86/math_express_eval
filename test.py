@@ -9,7 +9,7 @@ expressions = [
     ("b = 10", 10),
     ("1+(2+4)*5+5/6", 31.8333333333),
     ("10 + 9 / 2 + 3 * (2 + 8)", 44.5),
-    ("a! + 2^2 * (7 + 3 / (3 + 4))", 35.7142857143),
+    ("a! + 2^2 * (7 + 3 / (-3 + 4))", 46),
     ("0.7 * 44 + 0.7 * 63 + 95", 169.9),
     ("100 ^ 0.5", 10),
     ("3!!", 720),
@@ -18,7 +18,11 @@ expressions = [
     ("b^a", 1000),
     ("a", 3),
     ("a = b", 10),
-    ("a", 10)
+    ("a", 10),
+    ("-5", -5),
+    ("-2*(-5)", 10),
+    ("-2*(-5) - 6", 4),
+    ("3*(-5 + 7)", 6)
 ]
 
 badExpressions = [
@@ -29,12 +33,16 @@ badExpressions = [
 ]
 
 for expression, expected in expressions:
-    tokens = lexer.getTokens(expression)
-    evaluated = parser.parse(tokens).eval()
-    close = math.isclose(evaluated, expected)
-    if not close:
-        print(expression, "evaluation incorrect, expected: ", expected, " got: ", evaluated)
-        exit(-1)
+    try:
+        tokens = lexer.getTokens(expression)
+        evaluated = parser.parse(tokens).eval()
+        close = math.isclose(evaluated, expected)
+        if not close:
+            print(expression, "evaluation incorrect, expected: ", expected, " got: ", evaluated)
+            exit(-1)
+    except Exception as e:
+        print(expression)
+        raise e
 
 for expression in badExpressions:
     try:
