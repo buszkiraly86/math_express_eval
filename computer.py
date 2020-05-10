@@ -166,6 +166,7 @@ class Parser:
         out = []
         i = 0
 
+        # handling single number
         if len(expression) == 1 and type(expression[0]) == NumberToken:
             return NumberLiteral(expression[0].value)
 
@@ -182,20 +183,27 @@ class Parser:
                 closingTokenIndex = next((len(expression) - 1- i for i, e in enumerate(reversed(expression)) if type(e) == ClosingToken), None)
                 out.append(self.parse(expression[i + 1: closingTokenIndex]))
                 i = closingTokenIndex
-            elif type(token) == NumberToken:
+            else:
+                out.append(token)
+
+            i += 1
+
+        expression = out.copy()
+        out = []
+
+        # transforming tokens to literals
+        for token in expression:
+            if type(token) == NumberToken:
                 out.append(NumberLiteral(token.value))
             elif type(token) == VariableToken:
                 if token.value not in context:
                     raise Exception("undeclared variable")
                 out.append(NumberLiteral(context[token.value].eval()))
-            elif type(token) == OperatorToken:
+            else:
                 out.append(token)
-
-            i += 1
 
         # updating the list
         expression = out.copy()
-        out = []
 
         # !
         expression = self.process(expression, ["!"], lambda op, x, y: Operation(op, [x, y]))
